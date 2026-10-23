@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FFB Chute Trajectory Calculator</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#17212f;--muted:#5f6b7a;--line:#d9e1eb;--blue:#1769e0;--red:#e04b45;--green:#18834b;--gold:#d38b19}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}header{background:#10243b;color:white;padding:24px clamp(16px,4vw,40px)}header h1{margin:0 0 6px;font-size:clamp(24px,3vw,34px)}header p{margin:0;color:#d6e1ef;max-width:900px}.wrap{max-width:1400px;margin:auto;padding:20px;display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px}.panel{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 16px #1c33500b}.panel h2{font-size:18px;margin:0 0 14px}.field{margin:14px 0}.field label{display:flex;justify-content:space-between;gap:10px;font-weight:650;margin-bottom:6px}.field output{color:var(--blue);font-variant-numeric:tabular-nums}.field input[type=range]{width:100%;accent-color:var(--blue)}.field input[type=number],select{width:100%;padding:9px;border:1px solid #c9d4e2;border-radius:8px;font:inherit;background:white}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hint{font-size:12px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}button{border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700;cursor:pointer}button.secondary{background:#eaf0f8;color:#203149}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #84b5ff;outline-offset:2px}.main{display:grid;gap:18px;align-content:start}.visual-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}.indicator-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.indicator-metrics{display:none !important}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px}.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:clamp(19px,2.2vw,28px);font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}.metric .u{font-size:12px;color:var(--muted)}canvas{width:100%;height:440px;display:block;border-radius:10px;background:linear-gradient(#fbfdff,#f5f8fc);border:1px solid var(--line)}#indicator{width:100%;max-width:500px;margin:0 auto;height:330px !important}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:9px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.table{width:100%;border-collapse:collapse;font-size:14px}.table th,.table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}.table th:first-child,.table td:first-child{text-align:left}.table th{color:var(--muted);font-weight:700}.note{font-size:13px;color:var(--muted)}.warning{border-left:4px solid var(--gold);padding:10px 12px;background:#fff8e9;border-radius:6px;font-size:13px}details.bucket-settings{margin-top:22px}details.bucket-settings>summary{font-size:18px;font-weight:750;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:2px 0 8px}details.bucket-settings>summary::-webkit-details-marker{display:none}details.bucket-settings>summary::after{content:"＋";font-size:18px;color:var(--blue)}details.bucket-settings[open]>summary::after{content:"−"}details.bucket-settings:not([open]) .field{display:none}.foot{max-width:1400px;margin:0 auto;padding:0 20px 24px;color:var(--muted);font-size:12px}
+@media(max-width:1050px){.visual-grid{grid-template-columns:1fr}}@media(max-width:900px){.wrap{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}canvas{height:360px}}@media(max-width:480px){.wrap{padding:12px}.panel{padding:14px}.metrics{gap:7px}.metric{padding:10px}canvas{height:310px}}
+</style>
+</head>
+<body>
+<header><h1>FFB Chute Trajectory Calculator</h1><p>Explore how chute angle, length and height affect the exit speed and fall path of a 50 kg oil-palm fresh fruit bunch (FFB). The animation and values update when you change the inputs.</p></header>
+<div class="wrap">
+<aside class="panel">
+<h2>Inputs</h2>
+<div class="two"><div class="field"><label for="mass">FFB mass (kg)</label><input id="mass" type="number" min="1" max="200" step="1" value="50"></div><div class="field"><label for="diam">Diameter (m)</label><input id="diam" type="number" min="0.1" max="1.5" step="0.01" value="0.7"></div></div>
+<div class="field"><label for="angle">Incline angle <output id="angleOut">45°</output></label><input id="angle" type="range" min="10" max="75" step="1" value="45"><div class="hint">Measured down from horizontal.</div></div>
+<div class="field"><label for="length">Inclined plane length (m) <output id="lengthOut">1.00</output></label><input id="length" type="range" min="0.25" max="3" step="0.05" value="1"></div>
+<div class="field"><label for="height">Plane start height, if horizontal (m) <output id="heightOut">1.50</output></label><input id="height" type="range" min="0.5" max="5" step="0.05" value="1.5"><div class="hint">Vertical height of the upper end before tilting the plane.</div></div>
+<details class="bucket-settings">
+<summary>Receiving bucket</summary>
+<div class="field"><label for="bucketX">Bucket centre position from plane start (m) <output id="bucketXOut">1.10</output></label><input id="bucketX" type="range" min="0" max="3" step="0.05" value="1.10"><div class="hint">Measured horizontally from the upper end of the plane; bucket stays fixed when angle changes.</div></div>
+<div class="field"><label for="bucket">Bucket rim height above ground (m) <output id="bucketOut">0.70</output></label><input id="bucket" type="range" min="0.1" max="2" step="0.05" value="0.70"><div class="hint">The bucket bottom stays on the ground; changing rim height changes its depth.</div></div>
+<div class="field"><label for="bucketW">Bucket opening width (m) <output id="bucketWOut">2.00</output></label><input id="bucketW" type="range" min="0.5" max="2.5" step="0.05" value="2.00"><div class="hint">2D side-view opening width. A real bucket must also be wide enough in the other direction.</div></div>
+</details>
+<div class="actions"><button id="play">▶ Play animation</button><button class="secondary" id="reset">Reset defaults</button></div>
+</aside>
+<main class="main">
+<div class="metrics">
+<div class="metric"><div class="k">Exit speed</div><div class="v" id="speed">3.15</div><div class="u">m/s</div></div>
+<div class="metric"><div class="k">Exit speed</div><div class="v" id="kmh">11.33</div><div class="u">km/h</div></div>
+<div class="metric"><div class="k">End of plane height</div><div class="v" id="endH">0.793</div><div class="u">m above ground</div></div>
+<div class="metric"><div class="k">Horizontal travel</div><div class="v" id="range">—</div><div class="u" id="rangeSub">to selected height</div></div>
+</div>
+<div class="visual-grid"><section class="panel"><h2>Animated side view</h2><canvas id="scene" aria-label="Animated side view of FFB rolling down an inclined plane and falling into a bucket"></canvas><div class="legend"><span><i class="dot" style="background:var(--blue)"></i>FFB path</span><span><i class="dot" style="background:#718096"></i>Chute / bucket</span><span><i class="dot" style="background:var(--red)"></i>Predicted centre trajectory after outlet</span></div><p class="note">The FFB is drawn to the same world scale as the chute length. During rolling, its centre is offset from the plane surface by one radius, perpendicular to the plane, so the fruit touches the plane rather than its centre lying on it. The dashed line begins at that centre position as the FFB leaves the outlet.</p></section>
+<section class="panel"><h2>Crane-style angle / fall-distance indicator</h2><p class="note">A semi-circular angle scale is mounted at the plane pivot. The inclined arm follows the selected angle, while a vertical plumb line and horizontal dimension show the predicted horizontal travel after the FFB leaves the outlet.</p><div class="field indicator-angle-control"><label for="angleIndicator">Incline angle <output id="angleIndicatorOut">45°</output></label><input id="angleIndicator" type="range" min="10" max="75" step="1" value="45" aria-label="Adjust incline angle from the indicator"><div class="hint">Adjust the plane angle here; the main input slider stays synchronised.</div></div><canvas id="indicator" aria-label="Large semi-circular angle indicator with a vertical plumb line and horizontal fall distance scale" style="height:330px"></canvas><div class="metrics indicator-metrics" style="margin-top:12px"><div class="metric"><div class="k">Plane angle</div><div class="v" id="indAngle">45°</div></div><div class="metric"><div class="k">Horizontal fall distance</div><div class="v" id="indRange">0.471</div><div class="u">m from outlet to ground contact</div></div><div class="metric"><div class="k">Exit speed</div><div class="v" id="indSpeed">3.15</div><div class="u">m/s</div></div><div class="metric"><div class="k">Fall time</div><div class="v" id="indTime">0.212</div><div class="u">s to ground contact</div></div></div></section></div>
+<div class="warning"><strong>Engineering note:</strong> These are idealised estimates. The solid-sphere rolling model assumes no slipping and ignores the irregular shape, deformation, rolling resistance, tumbling and impacts. Do not use this alone to size the chute or bucket supports.</div>
+</main></div><div class="foot">Model: g = 9.81 m/s². After leaving the plane, the FFB is treated as a projectile with no air resistance. Bucket horizontal position is measured from the plane start and stays fixed as angle changes; rim height and opening width are adjustable. The calculator checks a simplified rim-crossing condition; detailed collisions and FFB tumbling are not simulated.</div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id), g=9.81;
+const ids=['angle','length','height','mass','diam','bucket','bucketX','bucketW'];
+let anim=null, startTime=0, duration=1, lastCalc=null;
+const defaults={angle:45,length:1,height:1.5,mass:50,diam:0.7,bucket:0.7,bucketX:1.1,bucketW:2.0};
+function vals(){return {angle:+$('angle').value,length:+$('length').value,height:+$('height').value,mass:Math.max(1,+$('mass').value||50),diam:Math.max(.1,+$('diam').value||.7),model:'rolling',bucket:+$('bucket').value,bucketX:+$('bucketX').value,bucketW:+$('bucketW').value}}
+function calc(p,angle=p.angle){let th=angle*Math.PI/180, L=p.length, r=p.diam/2;
+ const drop=L*Math.sin(th), endH=p.height-drop;
+ const a=p.model==='rolling'?(5/7)*g*Math.sin(th):g*Math.sin(th);
+ const v=Math.sqrt(Math.max(0,2*a*L));
+ // Sphere centre at launch: normal offset above the inclined surface.
+ const z0=endH+r*Math.cos(th);
+ // Full flight ends when the FFB centre reaches one radius above ground. Bucket placement does not alter the free-flight path.
+ const target=r;
+ const fall=Math.max(0,z0-target);
+ const vy=v*Math.sin(th), vx=v*Math.cos(th);
+ const t=(-vy+Math.sqrt(vy*vy+2*g*fall))/g;
+ const xLaunch=L*Math.cos(th)+r*Math.sin(th);
+ const outletX=L*Math.cos(th);
+ const range=(xLaunch+vx*t)-outletX;
+ const bucketTarget=p.bucket+r;
+ const reachesBucketRimLevel=z0>=bucketTarget;
+ const bucketCross=Math.max(0,z0-bucketTarget);
+ const bucketT=(-vy+Math.sqrt(vy*vy+2*g*bucketCross))/g;
+ const bucketCrossX=xLaunch+vx*bucketT;
+ const bucketCenterX=p.bucketX;
+ const fits=reachesBucketRimLevel && (p.bucketW>=2*r) && (Math.abs(bucketCrossX-bucketCenterX)<=p.bucketW/2-r);
+ return {angle,th,L,r,endH,a,v,z0,target,fall,vy,vx,t,range,kmh:v*3.6,bucketT,bucketCrossX,bucketCenterX,reachesBucketRimLevel,fits,xLaunch};}
+function fmt(n,d=3){return Number.isFinite(n)?n.toFixed(d):'—'}
+function update(){let p=vals();$('angleOut').textContent=p.angle+'°';$('angleIndicator').value=p.angle;$('angleIndicatorOut').textContent=p.angle+'°';$('lengthOut').textContent=p.length.toFixed(2);$('heightOut').textContent=p.height.toFixed(2);$('bucketOut').textContent=p.bucket.toFixed(2);$('bucketXOut').textContent=p.bucketX.toFixed(2);$('bucketWOut').textContent=p.bucketW.toFixed(2);
+ let c=calc(p);lastCalc={p,c};$('speed').textContent=fmt(c.v,2);$('kmh').textContent=fmt(c.kmh,2);$('endH').textContent=fmt(c.endH,3);$('range').textContent=c.endH<=0?'Below ground':fmt(c.range,3);$('rangeSub').textContent='horizontal flight to ground-level contact';
+ drawIndicator(p,c);draw(0);}
+function drawIndicator(p,c){
+ const canvas=$('indicator'), rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+ canvas.width=Math.max(1,Math.floor(rect.width*dpr));canvas.height=Math.max(1,Math.floor(rect.height*dpr));
+ const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);const W=rect.width,H=rect.height;
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,W,H);
+ const ink='#26364a', muted='#64748b', blue='#1769e0', gold='#d38b19', green='#18834b';
+ // A boom-mounted semicircular distance scale rotates with the plane. The plumb stick stays truly vertical.
+ const cx=W*.5, cy=H*.40, rad=Math.min(H*.34,W*.36);
+ const theta=p.angle*Math.PI/180;
+ // The semicircular scale is attached to the plane; its local baseline follows the plane orientation.
+ // The plumb stick is world-vertical, so its tip intersects the rotating arc at the selected reading.
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.PI+theta);
+ ctx.strokeStyle='#8b98aa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,rad,Math.PI,2*Math.PI,false);ctx.stroke();
+ ctx.strokeStyle='#a8b3c2';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-rad-10,0);ctx.lineTo(rad+10,0);ctx.stroke();
+ // Calibrated marks: each angle is paired with the predicted horizontal travel for that angle.
+ for(let a=15;a<=75;a+=5){
+   const q=calc(p,a), local=1.5*Math.PI-(a*Math.PI/180);
+   const x=rad*Math.cos(local), y=rad*Math.sin(local), major=a%15===0;
+   ctx.strokeStyle=major?muted:'#c5ced9';ctx.lineWidth=major?1.7:1;
+   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(major?11:6)*Math.cos(local),y+(major?11:6)*Math.sin(local));ctx.stroke();
+   if(major){
+     const lx=(rad+20)*Math.cos(local), ly=(rad+20)*Math.sin(local)+3;
+     ctx.save();ctx.translate(lx,ly);ctx.rotate(-(Math.PI+theta));
+     ctx.fillStyle=muted;ctx.font='12px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`${a}°`,0,0);ctx.restore();
+     const dx=(rad+39)*Math.cos(local), dy=(rad+39)*Math.sin(local)+3;
+     ctx.save();ctx.translate(dx,dy);ctx.rotate(-(Math.PI+theta));
+     ctx.fillStyle=green;ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`${fmt(q.range,2)} m`,0,0);ctx.restore();
+   }
+ }
+ ctx.restore();
+ // Plane reference arm shows the attached chart orientation.
+ const armLen=rad*.9, planeX=cx+armLen*Math.cos(theta), planeY=cy+armLen*Math.sin(theta);
+ ctx.strokeStyle='#657386';ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(planeX,planeY);ctx.stroke();
+ ctx.strokeStyle='#d8e0e9';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(planeX,planeY);ctx.stroke();
+ // Fixed vertical plumb stick: do not rotate this line with the chart.
+ const tipX=cx, tipY=cy+rad;
+ ctx.strokeStyle=blue;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(tipX,tipY);ctx.stroke();
+ ctx.fillStyle=blue;ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fill();
+ // Angle label is attached to and aligned with the inclined plane, away from the scale's distance labels.
+ const labelT=.58, labelOffset=22;
+ const labelX=cx+armLen*labelT*Math.cos(theta)+labelOffset*Math.sin(theta);
+ const labelY=cy+armLen*labelT*Math.sin(theta)-labelOffset*Math.cos(theta);
+ ctx.save();ctx.translate(labelX,labelY);ctx.rotate(theta);
+ ctx.fillStyle=ink;ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText(`Plane angle ${p.angle}°`,0,-2);ctx.restore();
+ ctx.fillStyle=muted;ctx.font='11px system-ui';ctx.fillText('Scale rotates with plane',cx,16);
+ // The separate outlet-to-ground sketch has been removed; the distance dimension is shown on the main trajectory view.
+ $('indAngle').textContent=p.angle+'°';$('indRange').textContent=c.endH<=0?'—':fmt(c.range,3);$('indSpeed').textContent=fmt(c.v,2);$('indTime').textContent=c.endH<=0?'—':fmt(c.t,3);
+}
+function draw(progress=0){let canvas=$('scene'), rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.floor(rect.width*dpr));canvas.height=Math.max(1,Math.floor(rect.height*dpr));let ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);let W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
+ const p=lastCalc?.p||vals(), c=lastCalc?.c||calc(p);let pad=32, groundY=H-35, xEndWorld=p.length*Math.cos(c.th), bucketCenterWorld=p.bucketX, sceneMaxX=Math.max(2.8,c.xLaunch+c.range+0.4,bucketCenterWorld+p.bucketW/2+0.3), maxZ=Math.max(1.8,p.height+p.diam+0.25,p.bucket+1.0), scale=Math.min((W-90)/sceneMaxX,(H-105)/maxZ);
+ // Set world origin x=0 at upper plane end reference; y=0 ground. chute upper end at height p.height.
+ const x0=pad+12, yGround=groundY, X=x=>x0+x*scale, Y=z=>yGround-z*scale;
+ // Ground
+ ctx.fillStyle='#d9e0e8';ctx.fillRect(0,yGround,W,35);ctx.strokeStyle='#8794a5';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,yGround);ctx.lineTo(W,yGround);ctx.stroke();
+ // Bucket is an upside-down trapezoid: the left wall is vertical and only the right
+ // wall slopes inward at 45 degrees. Opening width is measured across the top rim.
+ const bx=X(bucketCenterWorld), bw=Math.max(50,p.bucketW*scale);
+ // Bucket bottom is fixed on the ground. Rim height controls the bucket's vertical depth.
+ const bh=Math.max(8,Math.min(p.bucket*scale,H*.42));
+ const by=yGround-bh;
+ const sideOffset=Math.min(bh,Math.max(0,bw-12)); // 45° right wall: horizontal inset equals vertical depth
+ const topL=bx-bw/2, topR=bx+bw/2, botL=topL, botR=topR-sideOffset;
+ ctx.beginPath();ctx.moveTo(topL,by);ctx.lineTo(botL,by+bh);ctx.lineTo(botR,by+bh);ctx.lineTo(topR,by);ctx.closePath();
+ ctx.fillStyle='#e9eef4';ctx.fill();ctx.strokeStyle='#68778b';ctx.lineWidth=3;ctx.stroke();
+ // Light inner face follows the vertical left wall and angled right wall.
+ ctx.save();ctx.beginPath();ctx.moveTo(topL+6,by+5);ctx.lineTo(botL+6,by+bh-5);ctx.lineTo(botR-6,by+bh-5);ctx.lineTo(topR-6,by+5);ctx.closePath();ctx.fillStyle='#dfe7ef';ctx.fill();ctx.restore();
+ ctx.strokeStyle='#9ba8b8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(topL,by);ctx.lineTo(topR,by);ctx.stroke();ctx.fillStyle='#4c5d73';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('BUCKET',bx,Math.min(H-8,by+bh+17));
+ // Support pole hidden for a cleaner suspended-chute view.
+ // inclined plane segment from x=0,z=height to x=Lcos, z=endH
+ let xEnd=p.length*Math.cos(c.th), zEnd=c.endH;let ux=X(0),uy=Y(p.height),ex=X(xEnd),ey=Y(zEnd);
+ ctx.strokeStyle='#657386';ctx.lineWidth=15;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(ux,uy);ctx.lineTo(ex,ey);ctx.stroke();ctx.strokeStyle='#d8e0e9';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(ux,uy-1);ctx.lineTo(ex,ey-1);ctx.stroke();ctx.strokeStyle='#4b5b70';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ux,uy-5);ctx.lineTo(ex,ey-5);ctx.stroke();
+ // Show rim-crossing assessment (centre must clear the rim and fit inside the opening).
+ // Bucket-entry status text intentionally hidden to keep the trajectory view uncluttered.
+ // FFB position along incline then flight
+ let x,z,ang;
+ if(progress<.35){let q=progress/.35, dist=c.L*q, a=c.a, tt=Math.sqrt(2*dist/Math.max(a,.0001)), speed=a*tt;x=dist*Math.cos(c.th)+c.r*Math.sin(c.th);z=p.height-dist*Math.sin(c.th)+c.r*Math.cos(c.th);ang=dist/c.r;}
+ else {let q=Math.min(1,(progress-.35)/.65),t=c.t*q;x=c.xLaunch+c.vx*t;z=c.z0-c.vy*t-.5*g*t*t;ang=c.L/c.r+c.v*t/c.r;}
+ // trail position indicator
+ const R=Math.max(7,p.diam*scale/2);
+ // fruit bunch stylized, proportional radius for actual scaling but minimum for visibility
+ function fruit(cx,cy,radius,rotation){ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation*.12);ctx.fillStyle='#5b3824';ctx.strokeStyle='#3f2a1c';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();ctx.stroke();let n=18;for(let i=0;i<n;i++){let a=i*2*Math.PI/n;let rr=radius*.64;for(let j=0;j<3;j++){let aa=a+j*.17;let xx=Math.cos(aa)*rr, yy=Math.sin(aa)*rr;ctx.fillStyle=['#e87520','#bd3c19','#f2a52b','#7f2c17'][((i+j)%4)];ctx.beginPath();ctx.ellipse(xx,yy,radius*.25,radius*.16,aa,0,Math.PI*2);ctx.fill();}}ctx.restore();}
+ fruit(X(x),Y(z),R,ang);
+ // Dashed theoretical centre trajectory ends at first ground contact (centre one radius above ground).
+ const tToGround=(-c.vy+Math.sqrt(c.vy*c.vy+2*g*Math.max(0,c.z0-c.r)))/g;
+ ctx.setLineDash([6,5]);ctx.strokeStyle='#e04b45';ctx.lineWidth=2.5;ctx.beginPath();for(let i=0;i<=100;i++){let t=tToGround*i/100,x=c.xLaunch+c.vx*t,z=c.z0-c.vy*t-.5*g*t*t; if(i===0)ctx.moveTo(X(x),Y(z));else ctx.lineTo(X(x),Y(z));}ctx.stroke();ctx.setLineDash([]);
+ // Horizontal distance dimension: from the outlet vertical projection to the FFB centre at first ground contact.
+ const dimY=yGround+18, xOutletDim=X(xEnd), xTrajectoryGround=X(c.xLaunch+c.vx*tToGround);
+ const leftDim=Math.min(xOutletDim,xTrajectoryGround), rightDim=Math.max(xOutletDim,xTrajectoryGround);
+ ctx.strokeStyle='#18834b';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(xOutletDim,yGround-2);ctx.lineTo(xOutletDim,dimY);ctx.moveTo(xTrajectoryGround,yGround-2);ctx.lineTo(xTrajectoryGround,dimY);ctx.stroke();ctx.setLineDash([]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(leftDim,dimY);ctx.lineTo(rightDim,dimY);ctx.stroke();
+ ctx.fillStyle='#18834b';ctx.beginPath();ctx.moveTo(leftDim,dimY);ctx.lineTo(leftDim+7,dimY-4);ctx.lineTo(leftDim+7,dimY+4);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(rightDim,dimY);ctx.lineTo(rightDim-7,dimY-4);ctx.lineTo(rightDim-7,dimY+4);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#18834b';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText(`Horizontal distance: ${fmt(c.range,3)} m`,(leftDim+rightDim)/2,dimY-8);
+ // labels and guides
+ ctx.fillStyle='#233247';ctx.font='12px system-ui';ctx.textAlign='left';ctx.fillText(`Angle: ${p.angle}°`,12,20);ctx.fillText(`Exit: ${fmt(c.v,2)} m/s`,12,37);ctx.fillText(`End height: ${fmt(c.endH,2)} m`,12,54);ctx.fillText(`Bucket centre: ${fmt(p.bucketX,2)} m from plane start`,12,71);ctx.fillText(`Rim height: ${fmt(p.bucket,2)} m · opening: ${fmt(p.bucketW,2)} m`,12,88);
+ ctx.strokeStyle='#9aa8b8';ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(ex,ey+12);ctx.lineTo(ex,yGround);ctx.stroke();ctx.setLineDash([]);
+ if(c.endH<=0){ctx.fillStyle='#b42318';ctx.textAlign='left';ctx.fillText('Warning: plane end is at/below ground for these inputs.',12,H-12)}
+}
+function stop(){if(anim)cancelAnimationFrame(anim);anim=null;$('play').textContent='▶ Play animation'}
+function play(){if(anim){stop();return}if(!lastCalc)update();$('play').textContent='Ⅱ Pause animation';startTime=performance.now();const step=now=>{const progress=Math.min(1,(now-startTime)/3600);draw(progress);if(progress>=1){anim=null;$('play').textContent='▶ Play animation';return}anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
+ids.forEach(id=>$(id).addEventListener('input',()=>{stop();update()}));$('angleIndicator').addEventListener('input',()=>{stop();$('angle').value=$('angleIndicator').value;update()});$('play').addEventListener('click',play);$('reset').addEventListener('click',()=>{stop();for(let [k,v] of Object.entries(defaults))$(k).value=v;update()});window.addEventListener('resize',()=>{if(lastCalc)drawIndicator(lastCalc.p,lastCalc.c);draw(0);});update();
+})();
+</script>
+</body></html>
